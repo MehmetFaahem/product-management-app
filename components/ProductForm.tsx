@@ -23,7 +23,7 @@ const schema = z.object({
   categoryId: z.string().min(1, "Category is required"),
 });
 
-type FormValues = z.infer<typeof schema>;
+type FormValues = z.input<typeof schema>;
 
 export default function ProductForm({ product }: { product?: Product }) {
   const isEdit = Boolean(product);
@@ -36,7 +36,7 @@ export default function ProductForm({ product }: { product?: Product }) {
     () => ({
       name: product?.name || "",
       description: product?.description || "",
-      price: product?.price || 0,
+      price: (product?.price as unknown as string) || "",
       image: product?.images?.[0] || "https://i.imgur.com/QkIa5tT.jpeg",
       categoryId: product?.category?.id || "",
     }),
@@ -55,7 +55,7 @@ export default function ProductForm({ product }: { product?: Product }) {
         const body: UpdateProductInput = {
           name: values.name,
           description: values.description,
-          price: values.price,
+          price: Number(values.price as unknown as string),
           images: [values.image],
           categoryId: values.categoryId,
         };
@@ -65,7 +65,7 @@ export default function ProductForm({ product }: { product?: Product }) {
         const body: CreateProductInput = {
           name: values.name,
           description: values.description,
-          price: values.price,
+          price: Number(values.price as unknown as string),
           images: [values.image],
           categoryId: values.categoryId,
         };
