@@ -1,6 +1,7 @@
 "use client";
 
 import { useFieldArray, useForm } from "react-hook-form";
+import type { Resolver } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -58,7 +59,7 @@ export default function ProductForm({ product }: { product?: Product }) {
     watch,
     formState: { errors },
   } = useForm<FormValues>({
-    resolver: zodResolver(schema) as any,
+    resolver: zodResolver(schema) as Resolver<FormValues>,
     defaultValues,
   });
 
