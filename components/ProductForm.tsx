@@ -1,6 +1,6 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -13,17 +13,19 @@ import {
   useUpdateProductMutation,
 } from "@/services/api";
 import { useRouter } from "next/navigation";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 const schema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().min(1, "Description is required"),
   price: z.coerce.number().positive("Price must be greater than 0"),
-  image: z.string().url("Image must be a valid URL"),
+  images: z
+    .array(z.object({ url: z.string().url("Image must be a valid URL") }))
+    .min(1, "At least one image is required"),
   categoryId: z.string().min(1, "Category is required"),
 });
 
-type FormValues = z.input<typeof schema>;
+type FormValues = z.infer<typeof schema>;
 
 export default function ProductForm({ product }: { product?: Product }) {
   const isEdit = Boolean(product);
@@ -31,13 +33,19 @@ export default function ProductForm({ product }: { product?: Product }) {
   const { data: categories } = useGetCategoriesQuery();
   const [createProduct, { isLoading: creating }] = useCreateProductMutation();
   const [updateProduct, { isLoading: updating }] = useUpdateProductMutation();
+  const [preview, setPreview] = useState<string | null>(
+    product?.images?.[0] || null
+  );
 
   const defaultValues: FormValues = useMemo(
     () => ({
       name: product?.name || "",
       description: product?.description || "",
-      price: (product?.price as unknown as string) || "",
-      image: product?.images?.[0] || "https://i.imgur.com/QkIa5tT.jpeg",
+      price: typeof product?.price === "number" ? product.price : 0,
+      images:
+        product?.images?.length && product.images[0]
+          ? product.images.map((u) => ({ url: u }))
+          : [{ url: "https://i.imgur.com/QkIa5tT.jpeg" }],
       categoryId: product?.category?.id || "",
     }),
     [product]
@@ -45,28 +53,49 @@ export default function ProductForm({ product }: { product?: Product }) {
 
   const {
     register,
+    control,
     handleSubmit,
+    watch,
     formState: { errors },
-  } = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues });
+  } = useForm<FormValues>({
+    resolver: zodResolver(schema) as any,
+    defaultValues,
+  });
+
+  const { fields, append, remove } = useFieldArray<FormValues, "images">({
+    control,
+    name: "images",
+  });
+
+  const imagesWatch = watch("images");
+  const imageUrls = Array.isArray(imagesWatch)
+    ? imagesWatch
+        .map((i) => (i && typeof i.url === "string" ? i.url : ""))
+        .filter((u) => Boolean(u && u.trim()))
+    : [];
+  const mainPreview = preview || imageUrls[0] || null;
 
   const onSubmit = async (values: FormValues) => {
     try {
+      const images = (values.images || [])
+        .map((i) => i?.url)
+        .filter((u): u is string => Boolean(u));
       if (isEdit && product) {
         const body: UpdateProductInput = {
           name: values.name,
           description: values.description,
-          price: Number(values.price as unknown as string),
-          images: [values.image],
+          price: values.price,
+          images,
           categoryId: values.categoryId,
         };
         await updateProduct({ id: product.id, body }).unwrap();
-        router.push(`/products/${product.slug}`);
+        router.push(`/products`);
       } else {
         const body: CreateProductInput = {
           name: values.name,
           description: values.description,
-          price: Number(values.price as unknown as string),
-          images: [values.image],
+          price: values.price,
+          images,
           categoryId: values.categoryId,
         };
         const created = await createProduct(body).unwrap();
@@ -76,7 +105,15 @@ export default function ProductForm({ product }: { product?: Product }) {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+      {mainPreview && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={mainPreview}
+          alt="Preview"
+          className="w-full h-56 md:h-64 object-cover rounded-xl border"
+        />
+      )}
       <div>
         <label className="label">Name</label>
         <input className="input" {...register("name")} />
@@ -96,30 +133,98 @@ export default function ProductForm({ product }: { product?: Product }) {
             className="input"
             type="number"
             step="0.01"
-            {...register("price")}
+            {...register("price", { valueAsNumber: true })}
           />
           {errors.price && <p className="error">{errors.price.message}</p>}
         </div>
         <div>
-          <label className="label">Image URL</label>
-          <input className="input" {...register("image")} />
-          {errors.image && <p className="error">{errors.image.message}</p>}
+          <label className="label">Category</label>
+          <select className="input" {...register("categoryId")}>
+            <option value="">Select a category</option>
+            {categories?.map((c: Category) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+          {errors.categoryId && (
+            <p className="error">{errors.categoryId.message}</p>
+          )}
         </div>
       </div>
       <div>
-        <label className="label">Category</label>
-        <select className="input" {...register("categoryId")}>
-          <option value="">Select a category</option>
-          {categories?.map((c: Category) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
+        <div className="flex items-center justify-between mb-2">
+          <label className="label">Images</label>
+          <button
+            type="button"
+            className="btn btn-ghost"
+            onClick={() => append({ url: "" })}
+          >
+            Add image
+          </button>
+        </div>
+        <div className="space-y-3">
+          {fields.map((field, index) => (
+            <div key={field.id} className="flex items-center gap-2">
+              <input
+                className="input flex-1"
+                {...register(`images.${index}.url` as const)}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  if (index === 0) setPreview(v || null);
+                }}
+              />
+              {fields.length > 1 && (
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={() => {
+                    const remaining = imageUrls.filter((_, i) => i !== index);
+                    const nextPreview = remaining[0] || null;
+                    setPreview(nextPreview);
+                    remove(index);
+                  }}
+                  title="Remove"
+                >
+                  Remove
+                </button>
+              )}
+            </div>
           ))}
-        </select>
-        {errors.categoryId && (
-          <p className="error">{errors.categoryId.message}</p>
+        </div>
+        {errors.images && (
+          <p className="error">
+            {(errors.images as unknown as { message?: string })?.message}
+          </p>
         )}
+        {Array.isArray(errors.images) &&
+          errors.images.map((err, i) =>
+            err?.message ? (
+              <p key={i} className="error">
+                {err.message as string}
+              </p>
+            ) : null
+          )}
       </div>
+
+      {imageUrls.length > 1 && (
+        <div className="grid grid-cols-5 gap-2">
+          {imageUrls.slice(0, 5).map((src: string, idx: number) => (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              key={src + idx}
+              src={src}
+              alt={"preview thumbnail " + (idx + 1)}
+              className={`h-16 w-full object-cover rounded-lg border cursor-pointer ${
+                mainPreview && src === mainPreview
+                  ? "ring-2 ring-[color:var(--c-primary)]"
+                  : "opacity-80 hover:opacity-100"
+              }`}
+              onClick={() => setPreview(src)}
+            />
+          ))}
+        </div>
+      )}
       <button className="btn btn-primary" disabled={creating || updating}>
         {isEdit
           ? updating

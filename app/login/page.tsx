@@ -7,6 +7,7 @@ import { useLoginMutation } from "@/services/api";
 import { useAppDispatch } from "@/lib/store";
 import { setCredentials } from "@/features/auth/authSlice";
 import { useRouter } from "next/navigation";
+import Header from "@/components/Header";
 
 const schema = z.object({
   email: z.string().email("Enter a valid email"),
@@ -34,15 +35,19 @@ export default function LoginPage() {
 
   return (
     <div>
-      <div className="container py-10">
+      <Header />
+      <div className="container py-16">
         <div className="max-w-md mx-auto card">
           <div className="card-body">
             <h1
               className="card-title text-2xl mb-4"
               style={{ color: "var(--c-primary)" }}
             >
-              Login
+              Welcome back
             </h1>
+            <p className="text-sm text-[color-mix(in_oklab,var(--c-fg)_/_70%,white)] mb-4">
+              Sign in with your email to continue.
+            </p>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div>
                 <label className="label">Email</label>
@@ -50,6 +55,7 @@ export default function LoginPage() {
                   className="input"
                   type="email"
                   placeholder="you@example.com"
+                  autoComplete="email"
                   {...register("email")}
                 />
                 {errors.email && (

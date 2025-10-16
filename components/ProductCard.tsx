@@ -10,7 +10,18 @@ export default function ProductCard({ product }: { product: Product }) {
   const [del, { isLoading }] = useDeleteProductMutation();
 
   return (
-    <div className="card">
+    <div className="card overflow-hidden transition-transform duration-150 hover:-translate-y-[2px]">
+      {product.images?.[0] && (
+        <Link href={`/products/${product.slug}`} className="block">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={product.images[0]}
+            alt={product.name}
+            className="w-full h-44 object-cover"
+            loading="lazy"
+          />
+        </Link>
+      )}
       <div className="card-body">
         <div className="flex items-start justify-between gap-3 mb-2">
           <Link

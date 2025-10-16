@@ -7,6 +7,8 @@
   --c-primary: #4e6e5d; /* green */
   --c-accent: #ad8a64; /* brown */
   --c-danger: #a44a3f; /* red */
+  --c-muted: color-mix(in oklab, var(--c-fg) 12%, white);
+  --c-ring: color-mix(in oklab, var(--c-primary) 60%, white);
 }
 
 @theme inline {
@@ -20,12 +22,17 @@
 }
 
 body {
-  background: var(--c-bg);
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--c-bg) 96%, white),
+    var(--c-bg)
+  );
   color: var(--c-fg);
+  accent-color: var(--c-primary);
 }
 
 .container {
-  max-width: 1200px;
+  max-width: 1280px;
   margin-inline: auto;
   padding-inline: 1rem;
 }
@@ -39,6 +46,8 @@ body {
   padding: 0.625rem 0.9rem;
   font-weight: 600;
   transition: all 150ms ease;
+  box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.02), 0 1px 2px rgba(0, 0, 0, 0.06);
+  border: 1px solid transparent;
 }
 .btn-primary {
   background: var(--c-primary);
@@ -61,6 +70,7 @@ body {
   background: white;
   border: 1px solid color-mix(in oklab, var(--c-fg) 8%, transparent);
   border-radius: 0.75rem;
+  box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.02), 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 .card-body {
   padding: 1rem;
@@ -75,6 +85,13 @@ body {
   border-radius: 0.5rem;
   padding: 0.6rem 0.75rem;
   background: white;
+}
+.input:focus-visible,
+.btn:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--c-ring);
+  outline-offset: 2px;
 }
 .label {
   font-size: 0.85rem;
@@ -98,5 +115,81 @@ body {
 @media (min-width: 1024px) {
   .grid-list {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Header utility */
+.header-blur {
+  border-bottom: 1px solid var(--c-muted);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: color-mix(in oklab, rgb(0, 0, 0) 80%, transparent);
+  -webkit-backdrop-filter: saturate(1.3) blur(10px);
+  backdrop-filter: saturate(1.3) blur(10px);
+}
+
+/* Skeletons */
+.skeleton {
+  background: linear-gradient(90deg, #f4f5f7 25%, #e9ebef 37%, #f4f5f7 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+}
+@keyframes shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+/* Media: dark mode (auto) */
+/* @media (prefers-color-scheme: dark) {
+  :root {
+    --c-bg: #0f1115;
+    --c-fg: #e7ecf3;
+    --c-primary: #72caa0;
+    --c-accent: #ddb07d;
+    --c-danger: #ff6b5f;
+  }
+  body {
+    background: linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--c-bg) 92%, black),
+      var(--c-bg)
+    );
+  }
+  .card {
+    background: color-mix(in oklab, var(--c-bg) 94%, black);
+  }
+  .input {
+    background: color-mix(in oklab, var(--c-bg) 96%, black);
+  }
+} */
+
+/* Custom responsive helpers for header */
+.nav-desktop {
+  display: none;
+}
+.nav-mobile-toggle {
+  display: inline-flex;
+}
+.nav-mobile-panel {
+  display: none;
+}
+.nav-mobile-panel.open {
+  display: block;
+}
+@media (min-width: 768px) {
+  .nav-desktop {
+    display: flex;
+  }
+  .nav-mobile-toggle {
+    display: none;
+  }
+  .nav-mobile-panel,
+  .nav-mobile-panel.open {
+    display: none !important;
   }
 }

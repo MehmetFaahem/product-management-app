@@ -86,7 +86,10 @@ export const api = createApi({
     }),
     createProduct: build.mutation<Product, CreateProductInput>({
       query: (body) => ({ url: "/products/", method: "POST", body }),
-      invalidatesTags: [{ type: "Products", id: "LIST" }],
+      invalidatesTags: [
+        { type: "Products", id: "LIST" },
+        { type: "Products", id: "SEARCH" },
+      ],
     }),
     updateProduct: build.mutation<
       Product,
@@ -102,12 +105,19 @@ export const api = createApi({
           ? [
               { type: "Product", id: r.id },
               { type: "Products", id: "LIST" },
+              { type: "Products", id: "SEARCH" },
             ]
-          : [{ type: "Products", id: "LIST" }],
+          : [
+              { type: "Products", id: "LIST" },
+              { type: "Products", id: "SEARCH" },
+            ],
     }),
     deleteProduct: build.mutation<Product, string>({
       query: (id) => ({ url: `/products/${id}`, method: "DELETE" }),
-      invalidatesTags: [{ type: "Products", id: "LIST" }],
+      invalidatesTags: [
+        { type: "Products", id: "LIST" },
+        { type: "Products", id: "SEARCH" },
+      ],
     }),
     getCategories: build.query<
       Category[],
