@@ -6,16 +6,13 @@ import {
   useGetProductBySlugQuery,
 } from "@/services/api";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import { Pencil, Trash2 } from "lucide-react";
+import { useParams } from "next/navigation";
+import { Pencil } from "lucide-react";
 import { useState } from "react";
 
 export default function ProductDetailPage() {
   const params = useParams<{ slug: string }>();
-  const router = useRouter();
   const { data, isLoading, error } = useGetProductBySlugQuery(params.slug);
-  const [del, { isLoading: deleting }] = useDeleteProductMutation();
-  const [confirming, setConfirming] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   const priceFormatter = new Intl.NumberFormat("en-US", {
@@ -141,12 +138,6 @@ export default function ProductDetailPage() {
                       >
                         <Pencil size={16} /> Edit
                       </Link>
-                      <button
-                        className="btn btn-danger"
-                        onClick={() => setConfirming(true)}
-                      >
-                        <Trash2 size={16} /> Delete
-                      </button>
                     </div>
                   </div>
 
@@ -165,45 +156,6 @@ export default function ProductDetailPage() {
                 </div>
               </div>
             </div>
-
-            {/* Delete confirmation modal */}
-            {confirming && (
-              <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4">
-                <div className="w-full max-w-sm rounded-xl bg-white  shadow-xl border">
-                  <div className="p-4 border-b">
-                    <h2 className="font-semibold">Delete product</h2>
-                  </div>
-                  <div className="p-4 text-sm text-[color-mix(in_oklab,var(--c-fg)_/_80%,white)]">
-                    Are you sure you want to delete{" "}
-                    <span
-                      className="font-medium"
-                      style={{ color: "var(--c-fg)" }}
-                    >
-                      {data.name}
-                    </span>
-                    ? This action cannot be undone.
-                  </div>
-                  <div className="p-4 pt-0 flex items-center justify-end gap-2">
-                    <button
-                      className="btn btn-ghost"
-                      onClick={() => setConfirming(false)}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      className="btn btn-danger"
-                      disabled={deleting}
-                      onClick={async () => {
-                        await del(data.id).unwrap();
-                        router.push("/products");
-                      }}
-                    >
-                      {deleting ? "Deleting..." : "Delete"}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         )}
       </main>
