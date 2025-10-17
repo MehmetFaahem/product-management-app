@@ -66,7 +66,9 @@ export default function LoginPage() {
                 {isLoading ? "Signing in..." : "Sign in"}
               </button>
               {error && (
-                <p className="error">Failed to sign in. Please try again.</p>
+                <p className="error">
+                  Failed to sign in. Please enter a valid email.
+                </p>
               )}
             </form>
           </div>
