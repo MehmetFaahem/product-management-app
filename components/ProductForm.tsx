@@ -229,32 +229,6 @@ export default function ProductForm({ product }: { product?: Product }) {
             </button>
           </div>
         </div>
-        <div className="space-y-3">
-          {fields.map((field, index) => (
-            <div key={field.id} className="flex items-center gap-2">
-              <input
-                className="input flex-1"
-                value={imageUrls[index] || ""}
-                readOnly
-              />
-              {fields.length > 0 && (
-                <button
-                  type="button"
-                  className="btn btn-ghost"
-                  onClick={() => {
-                    const remaining = imageUrls.filter((_, i) => i !== index);
-                    const nextPreview = remaining[0] || null;
-                    setPreview(nextPreview);
-                    remove(index);
-                  }}
-                  title="Remove"
-                >
-                  Remove
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
         {errors.images && (
           <p className="error">
             {(errors.images as unknown as { message?: string })?.message}
@@ -270,12 +244,11 @@ export default function ProductForm({ product }: { product?: Product }) {
           )}
       </div>
 
-      {imageUrls.length > 1 && (
-        <div className="grid grid-cols-5 gap-2">
-          {imageUrls.slice(0, 5).map((src: string, idx: number) => (
-            // eslint-disable-next-line @next/next/no-img-element
+      <div className="grid grid-cols-5 gap-2">
+        {imageUrls.map((src: string, idx: number) => (
+          <div key={src + idx} className="relative group">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              key={src + idx}
               src={src}
               alt={"preview thumbnail " + (idx + 1)}
               className={`h-16 w-full object-cover rounded-lg border cursor-pointer ${
@@ -285,9 +258,49 @@ export default function ProductForm({ product }: { product?: Product }) {
               }`}
               onClick={() => setPreview(src)}
             />
-          ))}
-        </div>
-      )}
+            <button
+              type="button"
+              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+              onClick={(e) => {
+                e.stopPropagation();
+                const remaining = imageUrls.filter((_, i) => i !== idx);
+                const nextPreview = remaining[0] || null;
+                setPreview(nextPreview);
+                remove(idx);
+              }}
+              title="Remove image"
+            >
+              ×
+            </button>
+          </div>
+        ))}
+        <button
+          type="button"
+          className="h-16 w-full border border-dashed rounded-lg flex flex-col items-center justify-center text-sm text-gray-500 hover:bg-gray-50"
+          onClick={() => fileInputRef.current?.click()}
+          title="Add images"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3l2-3h8l2 3h3a2 2 0 0 1 2 2z" />
+            <circle cx="12" cy="13" r="4" />
+          </svg>
+          <span className="mt-1 text-[8px] md:text-sm">
+            {uploadingCount > 0
+              ? `Uploading (${uploadingCount})...`
+              : "Add images"}
+          </span>
+        </button>
+      </div>
       <button className="btn btn-primary" disabled={creating || updating}>
         {isEdit
           ? updating
