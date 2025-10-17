@@ -23,21 +23,28 @@ export default function Products() {
   const initialMinPrice = searchParams.get("minPrice") || "";
   const initialMaxPrice = searchParams.get("maxPrice") || "";
   const initialSort = searchParams.get("sort") || "newest";
+  const { token } = useAppSelector((state) => state.auth);
   const {
     data: products,
     isLoading,
     isFetching,
     refetch,
-  } = useGetProductsQuery({
-    offset,
-    limit,
-    categoryId: initialCategoryId || undefined,
-  });
-  const { token } = useAppSelector((state) => state.auth);
+  } = useGetProductsQuery(
+    {
+      offset,
+      limit,
+      categoryId: initialCategoryId || undefined,
+    },
+    {
+      skip: !token, // Skip the query if user is not authenticated
+    }
+  );
   const [trigger, { data: searchData, isFetching: searching }] =
     useLazySearchProductsQuery();
   const [q, setQ] = useState("");
-  const { data: categories } = useGetCategoriesQuery();
+  const { data: categories } = useGetCategoriesQuery(undefined, {
+    skip: !token, // Skip the query if user is not authenticated
+  });
   const [categoryId, setCategoryId] = useState<string>(initialCategoryId);
   const [minPrice, setMinPrice] = useState<string>(initialMinPrice);
   const [maxPrice, setMaxPrice] = useState<string>(initialMaxPrice);

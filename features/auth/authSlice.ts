@@ -1,6 +1,7 @@
 "use client";
 
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { createSlice, PayloadAction, createAsyncThunk } from "@reduxjs/toolkit";
+import { api } from "@/services/api";
 
 interface AuthState {
   token: string | null;
@@ -31,4 +32,22 @@ const authSlice = createSlice({
 });
 
 export const { setCredentials, logout } = authSlice.actions;
+
+export const logoutAndClearCache = createAsyncThunk(
+  "auth/logoutAndClearCache",
+  async (_, { dispatch }) => {
+    dispatch(logout());
+
+    dispatch(api.util.resetApiState());
+
+    try {
+      if (typeof window !== "undefined" && window.localStorage) {
+        window.localStorage.removeItem("persist:root");
+      }
+    } catch {}
+
+    return null;
+  }
+);
+
 export default authSlice.reducer;

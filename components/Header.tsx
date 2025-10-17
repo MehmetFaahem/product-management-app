@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useAppDispatch, useAppSelector } from "@/lib/store";
-import { logout } from "@/features/auth/authSlice";
+import { logoutAndClearCache } from "@/features/auth/authSlice";
 import { LogOut, Plus, ShoppingBag, Menu, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -13,8 +13,8 @@ export default function Header() {
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const handleLogout = () => {
-    dispatch(logout());
+  const handleLogout = async () => {
+    dispatch(logoutAndClearCache());
     router.push("/login");
     setMobileOpen(false);
   };
