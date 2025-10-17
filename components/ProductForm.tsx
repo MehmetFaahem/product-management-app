@@ -14,7 +14,7 @@ import {
   useUpdateProductMutation,
 } from "@/services/api";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 const schema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -46,7 +46,7 @@ export default function ProductForm({ product }: { product?: Product }) {
       images:
         product?.images?.length && product.images[0]
           ? product.images.map((u) => ({ url: u }))
-          : [{ url: "https://i.imgur.com/QkIa5tT.jpeg" }],
+          : [],
       categoryId: product?.category?.id || "",
     }),
     [product]
@@ -68,6 +68,9 @@ export default function ProductForm({ product }: { product?: Product }) {
     name: "images",
   });
 
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [uploadingCount, setUploadingCount] = useState<number>(0);
+
   const imagesWatch = watch("images");
   const imageUrls = Array.isArray(imagesWatch)
     ? imagesWatch
@@ -75,6 +78,56 @@ export default function ProductForm({ product }: { product?: Product }) {
         .filter((u) => Boolean(u && u.trim()))
     : [];
   const mainPreview = preview || imageUrls[0] || null;
+
+  async function uploadToCloudinary(file: File): Promise<string> {
+    const signRes = await fetch("/api/cloudinary/sign", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+    if (!signRes.ok) throw new Error("Failed to get signature");
+    const { signature, timestamp, apiKey, cloudName, folder } =
+      await signRes.json();
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("api_key", apiKey);
+    formData.append("timestamp", String(timestamp));
+    formData.append("signature", signature);
+    if (folder) formData.append("folder", folder);
+
+    const uploadRes = await fetch(
+      `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`,
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
+    if (!uploadRes.ok) throw new Error("Upload failed");
+    const data = await uploadRes.json();
+    const url: string | undefined = data.secure_url || data.url;
+    if (!url) throw new Error("No URL returned from Cloudinary");
+    return url;
+  }
+
+  async function handleFilesSelected(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    setUploadingCount((c) => c + files.length);
+    try {
+      for (const file of Array.from(files)) {
+        try {
+          // eslint-disable-next-line no-await-in-loop
+          const url = await uploadToCloudinary(file);
+          append({ url });
+          if (!preview) setPreview(url);
+        } finally {
+          setUploadingCount((c) => Math.max(0, c - 1));
+        }
+      }
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
 
   const onSubmit = async (values: FormValues) => {
     try {
@@ -156,26 +209,35 @@ export default function ProductForm({ product }: { product?: Product }) {
       <div>
         <div className="flex items-center justify-between mb-2">
           <label className="label">Images</label>
-          <button
-            type="button"
-            className="btn btn-ghost"
-            onClick={() => append({ url: "" })}
-          >
-            Add image
-          </button>
+          <div className="flex items-center gap-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => handleFilesSelected(e.target.files)}
+            />
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {uploadingCount > 0
+                ? `Uploading (${uploadingCount})...`
+                : "Add images"}
+            </button>
+          </div>
         </div>
         <div className="space-y-3">
           {fields.map((field, index) => (
             <div key={field.id} className="flex items-center gap-2">
               <input
                 className="input flex-1"
-                {...register(`images.${index}.url` as const)}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  if (index === 0) setPreview(v || null);
-                }}
+                value={imageUrls[index] || ""}
+                readOnly
               />
-              {fields.length > 1 && (
+              {fields.length > 0 && (
                 <button
                   type="button"
                   className="btn btn-ghost"
