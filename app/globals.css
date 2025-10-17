@@ -90,8 +90,8 @@ body {
 .btn:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 2px solid var(--c-ring);
-  outline-offset: 2px;
+  outline: none;
+  outline-offset: 0px;
 }
 .label {
   font-size: 0.85rem;

@@ -35,19 +35,19 @@ export default function Header() {
 
         {/* Desktop navigation (custom CSS) */}
         <nav className="nav-desktop items-center gap-2">
-          <Link className="btn btn-ghost" href="/products">
-            Browse
-          </Link>
           {token ? (
             <>
+              <Link className="btn btn-ghost" href="/products">
+                Browse
+              </Link>
               <Link className="btn btn-primary" href="/products/new">
                 <Plus size={16} /> New
               </Link>
               <button className="btn btn-ghost" onClick={handleLogout}>
                 <LogOut size={16} /> Logout
               </button>
-              <span className="text-sm text-[color-mix(in_oklab,var(--c-fg)_/_70%,white)]">
-                {email}
+              <span className="text-sm font-bold bg-[var(--c-primary)] text-white rounded-full w-12 h-12 flex items-center justify-center">
+                {email?.slice(0, 3).toUpperCase()}
               </span>
             </>
           ) : (
@@ -99,7 +99,7 @@ export default function Header() {
               <button className="btn btn-ghost" onClick={handleLogout}>
                 <LogOut size={16} /> Logout
               </button>
-              <span className="px-1 text-sm text-[color-mix(in_oklab,var(--c-fg)_/_70%,white)]">
+              <span className="px-1 text-sm text-[color-mix(in_oklab,var(--c-fg)_/_70%,white)] text-center">
                 {email}
               </span>
             </>

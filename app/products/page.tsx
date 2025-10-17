@@ -7,7 +7,7 @@ export default function ProductsPage() {
   return (
     <div>
       <Header />
-      <main className="container py-6">
+      <main className="container pb-6">
         <Products />
       </main>
     </div>

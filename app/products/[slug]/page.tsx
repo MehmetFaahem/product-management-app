@@ -169,7 +169,7 @@ export default function ProductDetailPage() {
             {/* Delete confirmation modal */}
             {confirming && (
               <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4">
-                <div className="w-full max-w-sm rounded-xl bg-white dark:bg-neutral-900 shadow-xl border">
+                <div className="w-full max-w-sm rounded-xl bg-white  shadow-xl border">
                   <div className="p-4 border-b">
                     <h2 className="font-semibold">Delete product</h2>
                   </div>

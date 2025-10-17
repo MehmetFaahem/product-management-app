@@ -85,7 +85,7 @@ export const api = createApi({
         result ? [{ type: "Product", id: result.id }] : [],
     }),
     createProduct: build.mutation<Product, CreateProductInput>({
-      query: (body) => ({ url: "/products/", method: "POST", body }),
+      query: (body) => ({ url: "/products", method: "POST", body }),
       invalidatesTags: [
         { type: "Products", id: "LIST" },
         { type: "Products", id: "SEARCH" },
